@@ -23,7 +23,8 @@ models = {
 }
 
 # Data Collection Settings
-runs_per_prompt = 3
+runs_per_prompt = 1
+data_file_path = "./output/data.json"
 
 # Load Prompts
 with open('prompts.json', 'r') as f:
@@ -56,5 +57,5 @@ for model in data:
     data[model]['std_dev'] = float(np.std(scores))
 
 # Dump Data to File
-with open("data.json", 'w') as f:
+with open(data_file_path, 'w') as f:
     json.dump(data, f, indent=4)
