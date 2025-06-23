@@ -46,7 +46,7 @@ If OpenAI tends to carry a more positive sentiment relating to its investors tha
    ```bash
    python main.py
    ```
-4. Review the output in `data.json` for sentiment scores and LLM responses.
+4. Review the output in `./output/data.json` for sentiment scores and LLM responses.
 
 ## 📜 License
 
