@@ -12,9 +12,9 @@ gpt_key = os.getenv("GPT_API_KEY")
 gemini_key = os.getenv("GEMINI_API_KEY")
 
 # Define LLM Models to use
-gpt_model = 'gpt-4'
+gpt_model = 'o4-mini'
 gemini_model = 'gemini-2.0-flash'
-claude_model = 'claude-opus-4-20250514'
+claude_model = 'claude-sonnet-4-20250514'
 
 models = {
     gpt_model: lambda prompt: gpt_get_response(gpt_model, prompt, gpt_key),
@@ -23,7 +23,7 @@ models = {
 }
 
 # Data Collection Settings
-runs_per_prompt = 1
+runs_per_prompt = 10
 data_file_path = "./output/data.json"
 
 # Load Prompts
@@ -32,16 +32,20 @@ with open('prompts.json', 'r') as f:
 
 
 # Create data structure of output
-data = {model: {'scores': [], 'average': 0.0, 'std_dev': 0.0, 'responses': {}} for model in models}
+data = {model: {'neutral_scores': [], 'investor_scores': [], 'neutral_average': 0.0, "investor_average": 0.0, 'average': 0.0, 'neutral_std_dev': 0.0, 'investor_std_dev': 0.0, 'std_dev': 0.0, 'responses': {}} for model in models}
 
 # Collect Data / Sentiment Values
-for prompt in prompts:
+for prompt in (prompts['neutral'] + prompts['investor']):
     for model_name, get_response in models.items():
         for _ in range(runs_per_prompt):
             response = get_response(prompt)
             score = get_sentiment_value(response)
 
-            data[model_name]['scores'].append(score)
+            if prompt in prompts['neutral']:
+                data[model_name]['neutral_scores'].append(score)
+            if prompt in prompts['investor']:
+                data[model_name]['investor_scores'].append(score)
+
             if prompt not in data[model_name]['responses']:
                 data[model_name]['responses'][prompt] = []
             
@@ -52,9 +56,17 @@ for prompt in prompts:
 
 # Calculate mean/standard deviation
 for model in data:
-    scores = data[model]['scores']
-    data[model]['average'] = float(np.mean(scores))
-    data[model]['std_dev'] = float(np.std(scores))
+    neutral_scores = data[model]['neutral_scores']
+    investor_scores = data[model]['investor_scores']
+
+    data[model]['neutral_average'] = float(np.mean(neutral_scores))
+    data[model]['neutral_std_dev'] = float(np.std(neutral_scores))
+
+    data[model]['investor_average'] = float(np.mean(investor_scores))
+    data[model]['investor_std_dev'] = float(np.std(investor_scores))
+
+    data[model]['average'] = float(np.mean(investor_scores + neutral_scores))
+    data[model]['std_dev'] = float(np.std(investor_scores + neutral_scores))
 
 # Dump Data to File
 with open(data_file_path, 'w') as f:
